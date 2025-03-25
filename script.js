@@ -117,3 +117,77 @@ const displayColors = colors => {
   });
 
 };
+
+let allTags = [];
+let displayTags = 0;
+
+function displayTags(tags) {
+  const tagsContainer = document.querySelector('.tags-container');
+  const resultList = tagsContainer.querySelector('.results');
+  const error = tagsContainer.querySelector('.error');
+  const seeMoreButton = document.getElementById('seeMoreButton');
+  const exportTagsButton = document.getElementById('exportTagsButton');
+
+  if (resultList) {
+    resultList.innerHTML = '';
+  } else {
+    const resultListContainer = document.createElement('div');
+    resultListContainer.className = 'results';
+    tagsContainer.insertBefore(resultListContainer, seeMoreButton);
+  }
+
+  allTags = tags;
+  displayedTags = 0;
+
+  const showMoreTags = () => {
+    const tagsToShow = allTags.slice(displayedTags, displayedTags + tagsPerPage);
+    displayedTags += tagsToShow.length;
+
+    const tagsHTML = tagsToShow.map(({ tag: { en } }) => `
+    
+    <div class="result-item">
+      <p>${en}</p>
+    </div>
+    `).join('');
+
+    if (resultList) {
+      resultList.innerHTML += tagsHTML;
+    }
+
+    error.style.display = displayedTags > 0 ? 'none' : 'block';
+    seeMoreButton.style.display = displayedTags < allTags.length ? 'block' : 'none';
+    exportTagsButton.style.display = displayedTags > 0 ? 'block' : 'none';
+  };
+
+  showMoreTags();
+  seeMoreButton.addEventListener('click', showMoreTags);
+  exportTagsButton.addEventListener('click', exportTagsToFile);
+}
+
+const exportTagsToFile = () => {
+  if (allTags.lenght === 0) {
+    showToast('No tags available to export!');
+    return;
+  }
+
+  const tagsText = allTags.map(({ tag: { en } }) => en).join('/n');
+  const blob = new Blob([tagsText], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;;
+  a.download = 'Tags.text';
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+const showToast = message => {
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.classList.add('show'), 100);
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => document.body.removeChild(toast), 500);
+  }, 3000);
+};
